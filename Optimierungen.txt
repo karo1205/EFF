@@ -1,0 +1,72 @@
+Optimierungen:
+==============
+Optimierungen: 	die folgenden Optimierungen wurden kummulativ angewendet. Also in den compiler-optimierungen sind 
+				die Code-optimierungen drinnen, in den lex-Optimierungen compiler- und code-optimierungen.
+
+ACHTUNG: jedesmal, wenn der lexer neu aufgerufen wird, müssen die code-Optimierungen händisch nachgezogen werden!
+
+
+1. Code Optimierung
+	Zeile 698: YY_DECL  (=yy_lex (void)): Rausziehen der initialisierung in eine eigene Funktion
+	Absicht: Unmengen von if-Abfaragen vermeiden
+	Verbesserung: Geringfügig. ca 1.5% weniger cycles.
+
+	Anmerkung: Wenn mit debug und ohne Optimierung compiliert (gcc -g scanner.c -o scanner)
+	erschlechtert sich das Ergebnis im Vergleich zum Original sogar (warum?)
+
+2. An der buffersize schrauben (Zeile 592ff: YY_BUF_SIZE und YY_READ_BUF_SIZE) bringt nichts.
+	Änderungen zum Negativen nur wenn Buffersize sehr klein
+	--> nicht durchgeführt
+
+3. Makefile-Optimierungen:
+-O: typisches result:
+	cycles liegen um 4Mrd
+
+    3.943.592.855 cycles                    #    0,000 GHz                     [39,89%]
+     6.003.809.068 instructions              #    1,52  insns per cycle         [59,92%]
+         7.901.294 L1-dcache-load-misses                                        [60,02%]
+            58.518 LLC-load-misses                                              [60,19%]
+        45.021.288 branch-misses                                                [39,98%]
+
+       1,618529073 seconds time elapsed
+
+-O3: typisches result:
+	reduzierung der cycles auf ein bissl mehr als 3.7Mrd
+
+     3.753.773.473 cycles                    #    0,000 GHz                     [39,89%]
+     4.958.113.305 instructions              #    1,32  insns per cycle         [60,22%]
+         7.762.041 L1-dcache-load-misses                                        [60,31%]
+            41.317 LLC-load-misses                                              [60,12%]
+        51.898.032 branch-misses                                                [39,80%]
+
+       1,514981346 seconds time elapsed
+
+-Ofast: typisches result:
+	reduzierung der cycles auf ein bissl mehr als 3.6Mrd
+
+     3.625.313.164 cycles                    #    0,000 GHz                     [40,07%]
+     4.971.797.164 instructions              #    1,37  insns per cycle         [60,12%]
+         7.813.759 L1-dcache-load-misses                                        [60,22%]
+            43.457 LLC-load-misses                                              [60,08%]
+        50.535.228 branch-misses                                                [39,78%]
+
+       1,469871757 seconds time elapsed
+
+4. Optimierungen im lexer
+flex kann über die Option -F aufgerufen werden. Diese Option schaltet andere interne Tabellenräpresentation ein un entspricht einem -CFr:
+-CF: Tabellen werden nicht komprimiert
+-r: read() wird verwendet anstatt stdio. Ermöglicht schnelleren scanner-input
+
+-F: typisches result:
+	Deutliche Reduzierung der Cycles auf etwas mehr als 2.4Mrd
+
+     2.421.287.485 cycles                    #    0,000 GHz                     [40,43%]
+     2.779.150.904 instructions              #    1,15  insns per cycle         [60,28%]
+         9.001.069 L1-dcache-load-misses                                        [60,32%]
+            63.121 LLC-load-misses                                              [59,59%]
+        40.808.115 branch-misses                                                [39,68%]
+
+       0,990210628 seconds time elapsed
+
+
+
